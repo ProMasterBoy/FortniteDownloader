@@ -20,13 +20,9 @@ namespace DownloaderApp
         private readonly ObservableCollection<CheckboxItem> FileList = new ObservableCollection<CheckboxItem>();
         private readonly Client Client = new Client();
         private IDownloader FileDownloader;
-
         public MainWindow()
         {
             InitializeComponent();
-            foreach (var v in Downloader.SavedManifests.Keys)
-                ManifestVersionCombo.Items.Add(v);
-            ManifestVersionCombo.SelectedIndex = ManifestVersionCombo.Items.Count - 1;
             FileListBox.ItemsSource = FileList;
         }
 
@@ -37,24 +33,7 @@ namespace DownloaderApp
         {
             ManifestBtn.IsEnabled = false;
             DownloadBtn.IsEnabled = false;
-            if (RadioSelect.IsChecked ?? false)
-            {
-                FileDownloader = new Downloader(Downloader.SavedManifests[ManifestVersionCombo.Text], Client);
-            }
-            else if (RadioLogin.IsChecked ?? false)
-            {
-                FileDownloader = new AuthedDownloader();
-            }
-            else if (RadioCustom.IsChecked ?? false)
-            {
-                if (string.IsNullOrWhiteSpace(CustomManifestBox.Text))
-                {
-                    MessageBox.Show(this, "Enter a custom manifest id first!", "DownloaderApp", MessageBoxButton.OK);
-                    ManifestBtn.IsEnabled = true;
-                    return;
-                }
-                FileDownloader = new Downloader(CustomManifestBox.Text, Client);
-            }
+            FileDownloader = new AuthedDownloader();
             Dictionary<string, FileChunkPart[]>.KeyCollection keys;
             Log($"Downloading manifest {FileDownloader.ManifestUrl}");
             try
@@ -76,8 +55,15 @@ namespace DownloaderApp
                 FileList.Clear();
                 foreach (var file in keys)
                 {
-                    FileList.Add(new CheckboxItem(file));
+                    if (OnlyPaks.IsChecked == true)
+                    {
+                        if (file.Contains("FortniteGame/Content/Paks"))
+                            FileList.Add(new CheckboxItem(file));
+                    }
+                    else
+                        FileList.Add(new CheckboxItem(file));
                 }
+                    
                 ManifestBtn.IsEnabled = true;
                 DownloadBtn.IsEnabled = true;
             });
